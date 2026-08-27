@@ -1,0 +1,626 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>1개월 셀프 루틴</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Gothic+A1:wght@400;500;700;800&display=swap">
+<style>
+  :root {
+    --bg: #F6F1E7; --surface: #FFFFFF; --surface-2: #EEE6D6;
+    --ink: #221C15; --muted: #78695A; --line: #E1D6C1;
+    --accent: #D6491F; --accent-soft: #F5DDD1;
+    --ok: #4B7A5E; --ok-soft: #E1EBE2; --radius: 16px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1B1712; --surface: #24201A; --surface-2: #2C2620;
+      --ink: #F3EBDE; --muted: #AB9F8C; --line: #3B3327;
+      --accent: #FF7C46; --accent-soft: #4A2B1D; --ok: #86BE9C; --ok-soft: #22352A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1B1712; --surface: #24201A; --surface-2: #2C2620;
+    --ink: #F3EBDE; --muted: #AB9F8C; --line: #3B3327;
+    --accent: #FF7C46; --accent-soft: #4A2B1D; --ok: #86BE9C; --ok-soft: #22352A;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Gothic A1','Apple SD Gothic Neo',sans-serif; line-height: 1.5; -webkit-font-smoothing: antialiased; padding-bottom: 90px; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 40px; }
+  h1,h2,h3 { font-weight: 800; text-wrap: balance; margin: 0; }
+  .eyebrow { font-family:'Oswald',sans-serif; text-transform:uppercase; letter-spacing:.12em; font-size:.7rem; color:var(--accent); font-weight:600; }
+  header.hero { padding-bottom: 18px; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
+  header.hero h1 { font-size: clamp(1.4rem,4vw,1.9rem); margin-top: 6px; }
+  header.hero p { color: var(--muted); font-size: .92rem; margin-top: 8px; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 18px; }
+  .stat-box { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; text-align: center; }
+  .stat-box b { display: block; font-family:'Oswald',sans-serif; font-size: 1.4rem; }
+  .stat-box span { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+
+  .cal { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px; margin-bottom: 18px; }
+  .cal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom: 10px; font-family:'Oswald',sans-serif; font-weight:600; letter-spacing:.03em; gap: 8px; }
+  .cal-head .nav-btns { display:flex; gap: 6px; align-items:center; }
+  .cal-head button.arrow { font-family:'Oswald',sans-serif; border:1px solid var(--line); background:var(--surface-2); color:var(--ink); border-radius:8px; width:28px; height:28px; cursor:pointer; font-size:.9rem; }
+  .cal-head button.arrow:hover { border-color:var(--accent); color:var(--accent); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 5px; }
+  .cal-dow { font-size: .68rem; color: var(--muted); text-align: center; font-family:'Oswald',sans-serif; }
+  .cal-cell { aspect-ratio: 1; border-radius: 8px; display:flex; align-items:center; justify-content:center; font-size: .78rem; background: var(--surface-2); color: var(--muted); }
+  .cal-cell.empty { background: transparent; }
+  .cal-cell.today { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .cal-cell.done-full { background: var(--accent); color: #fff; font-weight: 700; }
+  .cal-cell.done-partial { background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+  .cal-cell.clickable { cursor: pointer; }
+  .cal-cell.clickable:hover { outline: 1.5px dashed var(--accent); outline-offset: -1.5px; }
+
+  .bars { display: flex; align-items: flex-end; gap: 4px; height: 60px; margin-top: 12px; }
+  .bar-col { flex: 1; display:flex; flex-direction:column; align-items:center; justify-content:flex-end; height:100%; }
+  .bar { width: 100%; background: var(--surface-2); border-radius: 3px 3px 0 0; min-height: 3px; }
+  .bar.active { background: var(--accent); }
+
+  nav.days { position: sticky; top: 0; z-index: 10; display:flex; gap:8px; padding: 10px 0; margin-bottom: 16px; background: var(--bg); border-bottom: 1px solid var(--line); }
+  nav.days button { flex:1; font-family:'Oswald',sans-serif; font-weight:600; letter-spacing:.02em; text-transform:uppercase; font-size:.78rem; padding: 10px 6px; border-radius: 12px; border:1px solid var(--line); background: var(--surface); color: var(--ink); cursor:pointer; }
+  nav.days button.active { background: var(--accent); border-color: var(--accent); color:#fff; }
+
+  .day-progress { display:flex; align-items:center; gap: 10px; margin-bottom: 14px; font-size:.85rem; color:var(--muted); }
+  .day-progress .track { flex:1; height:8px; background:var(--surface-2); border-radius:4px; overflow:hidden; }
+  .day-progress .fill { height:100%; background:var(--ok); }
+  .reset-btn { flex:none; font-family:'Oswald',sans-serif; font-size:.68rem; text-transform:uppercase; letter-spacing:.03em; border:1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 999px; padding: 6px 11px; cursor:pointer; }
+  .reset-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; display:flex; flex-direction:column; gap: 12px; }
+  .card.complete { border-color: var(--ok); }
+  .card-top { display:flex; gap: 12px; align-items: center; }
+  .diagram-wrap { flex: none; width: 64px; }
+  .diagram-wrap svg { width: 100%; height: auto; }
+  .diagram-wrap .zone-label { font-size: .62rem; color: var(--accent); text-align:center; margin-top: 2px; font-weight: 600; }
+  .card-title .ex-name { font-size: 1.02rem; font-weight: 800; }
+  .card-title .ex-meta { font-size: .78rem; color: var(--muted); margin-top: 2px; }
+
+  video.pt-video { width: 100%; border-radius: 10px; background: #000; display:block; max-height: 260px; }
+
+  .links-row { display:flex; gap: 8px; flex-wrap: wrap; font-size: .78rem; align-items:center; }
+  .links-row a.pill, .links-row button.pill { border: 1px solid var(--line); border-radius: 999px; padding: 5px 11px; color: var(--muted); text-decoration: none; background: var(--surface); font-family: inherit; font-size: .78rem; cursor: pointer; }
+  .links-row a.pill:hover, .links-row button.pill:hover { border-color: var(--accent); color: var(--accent); }
+
+  .history-wrap { border-top: 1px dashed var(--line); padding-top: 10px; display:none; }
+  .history-wrap.open { display:block; }
+  .history-wrap svg { width:100%; height:70px; }
+  .history-hint { font-size: .74rem; color: var(--muted); margin-top: 4px; }
+
+  .set-rows { display:flex; flex-direction:column; gap: 8px; }
+  .set-row { display:flex; align-items:center; gap: 10px; }
+  .set-row .set-check { width: 26px; height: 26px; border-radius: 50%; border: 1.5px solid var(--line); background: var(--surface); cursor:pointer; flex:none; font-family:'Oswald',sans-serif; font-size:.7rem; color: var(--muted); display:flex; align-items:center; justify-content:center; }
+  .set-row .set-check.checked { background: var(--ok); border-color: var(--ok); color: #fff; }
+  .set-row .set-label { font-size: .82rem; color: var(--muted); width: 76px; flex:none; font-family:'Oswald',sans-serif; }
+  .set-row input[type=number] { width: 64px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); font-family:'Oswald',sans-serif; font-variant-numeric: tabular-nums; }
+  .set-row .unit { font-size: .75rem; color: var(--muted); }
+  .set-controls { display:flex; gap: 8px; }
+  .set-controls button { font-family:'Oswald',sans-serif; font-size:.7rem; text-transform:uppercase; border:1px dashed var(--line); background:none; color:var(--muted); border-radius: 8px; padding: 6px 10px; cursor:pointer; }
+  .set-controls button:hover { border-color: var(--accent); color: var(--accent); }
+
+  .rest-bar { position: fixed; left: 0; right: 0; bottom: 0; background: var(--surface); border-top: 1px solid var(--line); padding: 12px 16px; display:flex; align-items:center; gap: 12px; box-shadow: 0 -6px 20px rgba(0,0,0,.08); z-index: 20; }
+  .rest-bar .count { font-family:'Oswald',sans-serif; font-size: 1.6rem; font-weight: 700; color: var(--accent); min-width: 52px; text-align:center; }
+  .rest-bar .info { flex:1; font-size: .8rem; color: var(--muted); }
+  .rest-bar button { font-family:'Oswald',sans-serif; font-size:.72rem; text-transform:uppercase; letter-spacing:.03em; border:1px solid var(--line); background: var(--surface-2); color: var(--ink); border-radius: 999px; padding: 8px 12px; cursor:pointer; }
+
+  .legend-row { display:flex; flex-wrap:wrap; gap: 10px 18px; font-size: .78rem; color: var(--muted); margin-bottom: 14px; }
+  .legend-row .sw { display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:5px; vertical-align:middle; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="hero">
+    <div class="eyebrow">PT 5회차 분석 &middot; 1개월 셀프 루틴</div>
+    <h1>1개월 상체/하체 루틴</h1>
+    <p>상체 A · 상체 B · 하체+유산소를 돌아가며 하는 2분할입니다. 세트 체크하면 자동으로 휴식 타이머가 돌고, 무게는 직접 입력해서 계속 기록됩니다.</p>
+  </header>
+
+  <div class="stats-row">
+    <div class="stat-box"><b id="stat-days">0</b><span id="stat-days-label">이번달 운동일</span></div>
+    <div class="stat-box"><b id="stat-streak">0</b><span>연속 기록</span></div>
+    <div class="stat-box"><b id="stat-today">0%</b><span>오늘 진행률</span></div>
+  </div>
+
+  <div class="cal">
+    <div class="cal-head">
+      <span id="cal-title">2026.08</span>
+      <div class="nav-btns">
+        <button class="arrow" id="cal-prev">‹</button>
+        <button class="arrow" id="cal-today-btn">•</button>
+        <button class="arrow" id="cal-next">›</button>
+      </div>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div class="bars" id="bars"></div>
+  </div>
+
+  <div class="legend-row">
+    <span><span class="sw" style="background:var(--accent)"></span>부위 다이어그램 하이라이트 = 자극 와야 할 곳</span>
+    <span>지난 날짜 캘린더 탭 = 완료/취소 되돌리기</span>
+  </div>
+
+  <nav class="days">
+    <button data-t="upperA">상체 A</button>
+    <button data-t="upperB">상체 B</button>
+    <button data-t="lower">하체+유산소</button>
+  </nav>
+
+  <div class="day-progress">
+    <span id="progress-text">0/0 세트</span>
+    <div class="track"><div class="fill" id="progress-fill" style="width:0%"></div></div>
+    <button id="reset-today" class="reset-btn">오늘 리셋</button>
+  </div>
+
+  <div id="exercise-list"></div>
+</div>
+
+<div class="rest-bar" id="rest-bar" style="display:none">
+  <div class="count" id="rest-count">60</div>
+  <div class="info">휴식 중 <span id="rest-next"></span></div>
+  <button id="rest-plus">+15초</button>
+  <button id="rest-skip">건너뛰기</button>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  const NS = 'http://www.w3.org/2000/svg';
+  function se(tag, attrs, cls) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (cls) e.setAttribute('class', cls); return e; }
+  function el(tag, props, children) {
+    props = props || {}; children = children || [];
+    const e = document.createElement(tag);
+    for (const k in props) {
+      const v = props[k];
+      if (k === 'class') e.className = v;
+      else if (k === 'text') e.textContent = v;
+      else if (k.indexOf('on') === 0 && typeof v === 'function') e.addEventListener(k.slice(2), v);
+      else if (k === 'style' && typeof v === 'object') Object.assign(e.style, v);
+      else if (v !== undefined && v !== null) e.setAttribute(k, v);
+    }
+    (Array.isArray(children) ? children : [children]).forEach(function (c) {
+      if (c === null || c === undefined) return;
+      e.appendChild(typeof c === 'string' ? document.createTextNode(c) : c);
+    });
+    return e;
+  }
+
+  // ---------- body diagram ----------
+  const ZONE_PARTS = [
+    { id: 'head', tag: 'circle', a: { cx: 60, cy: 16, r: 12 } },
+    { id: 'torso-upper', tag: 'rect', a: { x: 42, y: 32, width: 36, height: 30, rx: 10 } },
+    { id: 'torso-lower', tag: 'rect', a: { x: 44, y: 62, width: 32, height: 26, rx: 8 } },
+    { id: 'oblique-L', tag: 'rect', a: { x: 34, y: 62, width: 10, height: 26, rx: 5 } },
+    { id: 'oblique-R', tag: 'rect', a: { x: 76, y: 62, width: 10, height: 26, rx: 5 } },
+    { id: 'shoulder-L', tag: 'circle', a: { cx: 34, cy: 38, r: 9 } },
+    { id: 'shoulder-R', tag: 'circle', a: { cx: 86, cy: 38, r: 9 } },
+    { id: 'upperarm-L', tag: 'rect', a: { x: 22, y: 44, width: 12, height: 34, rx: 6 } },
+    { id: 'upperarm-R', tag: 'rect', a: { x: 86, y: 44, width: 12, height: 34, rx: 6 } },
+    { id: 'forearm-L', tag: 'rect', a: { x: 22, y: 80, width: 11, height: 30, rx: 5 } },
+    { id: 'forearm-R', tag: 'rect', a: { x: 87, y: 80, width: 11, height: 30, rx: 5 } },
+    { id: 'hip', tag: 'rect', a: { x: 40, y: 88, width: 40, height: 16, rx: 8 } },
+    { id: 'upperleg-L', tag: 'rect', a: { x: 42, y: 104, width: 15, height: 42, rx: 7 } },
+    { id: 'upperleg-R', tag: 'rect', a: { x: 63, y: 104, width: 15, height: 42, rx: 7 } },
+    { id: 'lowerleg-L', tag: 'rect', a: { x: 43, y: 146, width: 13, height: 38, rx: 6 } },
+    { id: 'lowerleg-R', tag: 'rect', a: { x: 64, y: 146, width: 13, height: 38, rx: 6 } }
+  ];
+  function buildBody(svg, activeZones) {
+    svg.setAttribute('viewBox', '0 0 120 190');
+    svg.setAttribute('role', 'img');
+    svg.setAttribute('aria-label', '신체 부위 하이라이트 다이어그램');
+    ZONE_PARTS.forEach(function (p) {
+      const active = activeZones.indexOf(p.id) !== -1;
+      const shape = se(p.tag, p.a, active ? 'zone-active' : 'zone-idle');
+      shape.style.fill = active ? 'var(--accent)' : 'var(--surface-2)';
+      shape.style.stroke = 'var(--line)';
+      shape.style.strokeWidth = '1.5';
+      svg.appendChild(shape);
+    });
+  }
+
+  // ---------- exercise data ----------
+  function ex(o) { return o; }
+  const EX = {
+    upperA: [
+      ex({ id:'latpulldown', name:'랫풀다운 (언더그립)', zones:['oblique-L','oblique-R'], zoneLabel:'등 옆(광배근)', sets:3, reps:'12~15', weight:15, rest:90, video:'1일차2.mp4' }),
+      ex({ id:'assistedpullup', name:'어시스트 풀업', zones:['oblique-L','oblique-R','shoulder-L','shoulder-R'], zoneLabel:'등 전체', sets:3, reps:'8~10', weight:null, rest:90, video:'4일차3.mp4' }),
+      ex({ id:'inclinepress', name:'인클라인 체스트프레스', zones:['torso-upper'], zoneLabel:'가슴 위쪽', sets:3, reps:'12', weight:10, rest:90, video:'3일차2.mp4' }),
+      ex({ id:'tricepspushdown', name:'케이블 트라이셉스 푸시다운', zones:['upperarm-L','upperarm-R'], zoneLabel:'팔 뒤쪽(삼두)', sets:2, reps:'15', weight:10, rest:60, video:'1일차4.mp4' }),
+      ex({ id:'bicepcurl', name:'이두 컬', zones:['upperarm-L','upperarm-R'], zoneLabel:'팔 앞쪽(이두)', sets:3, reps:'12', weight:7, rest:60, video:'3일차4.mp4' }),
+      ex({ id:'plank', name:'플랭크', zones:['torso-lower','oblique-L','oblique-R'], zoneLabel:'복부(코어)', sets:3, reps:'30~40초', weight:null, rest:45, video:null, isHold:true })
+    ],
+    upperB: [
+      ex({ id:'chestpress', name:'체스트프레스 머신', zones:['torso-upper'], zoneLabel:'가슴 중앙', sets:3, reps:'12', weight:10, rest:90, video:'4일차4.mp4' }),
+      ex({ id:'landminepress', name:'랜드마인 프레스', zones:['shoulder-L','shoulder-R','upperarm-L','upperarm-R'], zoneLabel:'어깨 앞+삼두', sets:2, reps:'10(양쪽)', weight:null, rest:60, video:'4일차1.mp4' }),
+      ex({ id:'landminerotation', name:'랜드마인 로테이션', zones:['oblique-L','oblique-R'], zoneLabel:'옆구리(복사근)', sets:2, reps:'10(양방향)', weight:null, rest:60, video:'4일차2.mp4' }),
+      ex({ id:'dumbbellfly', name:'덤벨 플라이', zones:['torso-upper'], zoneLabel:'가슴 안쪽/바깥쪽', sets:2, reps:'12', weight:5, rest:60, video:'3일차3.mp4' }),
+      ex({ id:'inclinepushup', name:'스미스 인클라인 푸시업', zones:['torso-upper','upperarm-L','upperarm-R'], zoneLabel:'가슴+삼두+어깨', sets:3, reps:'12~15', weight:null, rest:90, video:'3일차1.mp4' }),
+      ex({ id:'behindneckpress', name:'비하인드 넥 프레스', zones:['shoulder-L','shoulder-R'], zoneLabel:'어깨 측면·후면', sets:2, reps:'12', weight:8, rest:60, video:'5일차1.mp4' }),
+      ex({ id:'shoulderpress', name:'숄더프레스 머신', zones:['shoulder-L','shoulder-R'], zoneLabel:'어깨 전반', sets:2, reps:'12', weight:10, rest:60, video:'5일차2.mp4' })
+    ],
+    lower: [
+      ex({ id:'stepup', name:'스텝박스 스텝업 (워밍업)', zones:['upperleg-L','upperleg-R','lowerleg-L','lowerleg-R'], zoneLabel:'전신 워밍업', sets:2, reps:'10', weight:null, rest:30, video:'1일차1.mp4' }),
+      ex({ id:'hipkickback', name:'힙 킥백', zones:['hip'], zoneLabel:'엉덩이(둔근)', sets:2, reps:'12(양쪽)', weight:null, rest:45, video:'2일차1.mp4' }),
+      ex({ id:'legcurl', name:'레그컬', zones:['upperleg-L','upperleg-R'], zoneLabel:'허벅지 뒤(햄스트링)', sets:3, reps:'15', weight:15, rest:60, video:'2일차2.mp4' }),
+      ex({ id:'gobletsquat', name:'고블릿 스쿼트', zones:['hip','upperleg-L','upperleg-R'], zoneLabel:'엉덩이+허벅지 앞', sets:3, reps:'12', weight:8, rest:90, video:null }),
+      ex({ id:'sideplank', name:'사이드 플랭크', zones:['oblique-L','oblique-R'], zoneLabel:'옆구리(복사근)', sets:2, reps:'30초(양쪽)', weight:null, rest:45, video:null, isHold:true }),
+      ex({ id:'cardio', name:'유산소 (러닝머신 등)', zones:['upperleg-L','upperleg-R','lowerleg-L','lowerleg-R'], zoneLabel:'심박수 올리기', sets:1, reps:'15~20분', weight:null, rest:0, video:null })
+    ]
+  };
+
+  // ---------- state ----------
+  function dateKey(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+  const todayKey = dateKey(new Date());
+  function defaultState() { return { log:{}, sessions:{}, history:{}, setCounts:{} }; }
+  function loadState() {
+    try { const raw = localStorage.getItem('routine-state-v2'); if (raw) return Object.assign(defaultState(), JSON.parse(raw)); } catch (e) {}
+    return defaultState();
+  }
+  let state = loadState();
+  function saveState() {
+    try { localStorage.setItem('routine-state-v2', JSON.stringify(state)); } catch (e) {}
+  }
+  function getSetCount(exId, fallback) { return state.setCounts[exId] || fallback; }
+  function getSession(templateKey) {
+    const key = todayKey + ':' + templateKey;
+    if (!state.sessions[key]) {
+      const checks = {}; const weights = {};
+      EX[templateKey].forEach(function (x) {
+        checks[x.id] = new Array(getSetCount(x.id, x.sets)).fill(false);
+        weights[x.id] = lastWeightBefore(x.id) != null ? lastWeightBefore(x.id) : x.weight;
+      });
+      state.sessions[key] = { checks: checks, weights: weights };
+    }
+    const s = state.sessions[key];
+    EX[templateKey].forEach(function (x) {
+      const need = getSetCount(x.id, x.sets);
+      while (s.checks[x.id].length < need) s.checks[x.id].push(false);
+    });
+    return s;
+  }
+  function recomputeLog(templateKey) {
+    const session = getSession(templateKey);
+    let done = 0, total = 0;
+    EX[templateKey].forEach(function (x) { session.checks[x.id].forEach(function (c) { total++; if (c) done++; }); });
+    state.log[todayKey] = { template: templateKey, done: done, total: total };
+  }
+  function recordWeight(exId, weight) {
+    if (weight === null || weight === undefined || isNaN(weight)) return;
+    if (!state.history[exId]) state.history[exId] = [];
+    const arr = state.history[exId];
+    const existing = arr.find(function (r) { return r.date === todayKey; });
+    if (existing) existing.weight = weight;
+    else arr.push({ date: todayKey, weight: weight });
+    arr.sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+  }
+  function lastWeightBefore(exId) {
+    const arr = state.history[exId];
+    if (!arr || !arr.length) return null;
+    const past = arr.filter(function (r) { return r.date < todayKey; });
+    if (!past.length) return null;
+    return past[past.length - 1].weight;
+  }
+
+  // ---------- rest timer ----------
+  let restEnd = 0, restInterval = null;
+  function beep() {
+    try {
+      const Ctx = window.AudioContext || window.webkitAudioContext;
+      const ctx = new Ctx(); const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.frequency.value = 880; o.connect(g); g.connect(ctx.destination);
+      g.gain.setValueAtTime(0.25, ctx.currentTime);
+      o.start(); o.stop(ctx.currentTime + 0.35);
+    } catch (e) {}
+  }
+  function startRest(seconds, nextLabel) {
+    if (!seconds) return;
+    clearInterval(restInterval);
+    restEnd = Date.now() + seconds * 1000;
+    const bar = document.getElementById('rest-bar');
+    const countEl = document.getElementById('rest-count');
+    const nextEl = document.getElementById('rest-next');
+    nextEl.textContent = nextLabel ? ('→ 다음: ' + nextLabel) : '';
+    bar.style.display = 'flex';
+    function tick() {
+      const remain = Math.max(0, Math.ceil((restEnd - Date.now()) / 1000));
+      countEl.textContent = remain;
+      if (remain <= 0) {
+        clearInterval(restInterval);
+        bar.style.display = 'none';
+        beep();
+        if (navigator.vibrate) navigator.vibrate([200,100,200]);
+      }
+    }
+    tick();
+    restInterval = setInterval(tick, 250);
+  }
+  function cancelRest() {
+    clearInterval(restInterval);
+    restInterval = null;
+    document.getElementById('rest-bar').style.display = 'none';
+  }
+  document.getElementById('rest-plus').addEventListener('click', function () { restEnd += 15000; });
+  document.getElementById('rest-skip').addEventListener('click', cancelRest);
+
+  // ---------- weight history chart ----------
+  function buildHistoryChart(svg, arr) {
+    const data = arr.slice(-12);
+    svg.setAttribute('viewBox', '0 0 260 70');
+    if (data.length < 2) {
+      const t = se('text', { x: 130, y: 38, 'text-anchor': 'middle' }, null);
+      t.textContent = '기록이 더 쌓이면 그래프가 보여요';
+      t.style.fill = 'var(--muted)'; t.style.fontSize = '10px';
+      svg.appendChild(t);
+      return;
+    }
+    const weights = data.map(function (r) { return r.weight; });
+    const min = Math.min.apply(null, weights), max = Math.max.apply(null, weights);
+    const pad = 10;
+    const xStep = (260 - pad * 2) / (data.length - 1);
+    function yOf(w) { return max === min ? 35 : 60 - ((w - min) / (max - min)) * 50; }
+    let d = '';
+    data.forEach(function (r, i) {
+      const x = pad + i * xStep, y = yOf(r.weight);
+      d += (i === 0 ? 'M' : 'L') + x + ',' + y + ' ';
+    });
+    const path = se('path', { d: d.trim() }, null);
+    path.style.fill = 'none'; path.style.stroke = 'var(--accent)'; path.style.strokeWidth = '2';
+    svg.appendChild(path);
+    data.forEach(function (r, i) {
+      const x = pad + i * xStep, y = yOf(r.weight);
+      const c = se('circle', { cx: x, cy: y, r: 3 }, null);
+      c.style.fill = 'var(--accent)';
+      svg.appendChild(c);
+    });
+    const firstLabel = se('text', { x: pad, y: 68, 'text-anchor': 'start' }, null);
+    firstLabel.textContent = data[0].date.slice(5) + ' · ' + data[0].weight + 'kg';
+    firstLabel.style.fill = 'var(--muted)'; firstLabel.style.fontSize = '9px';
+    const lastLabel = se('text', { x: 260 - pad, y: 68, 'text-anchor': 'end' }, null);
+    lastLabel.textContent = data[data.length - 1].date.slice(5) + ' · ' + data[data.length - 1].weight + 'kg';
+    lastLabel.style.fill = 'var(--accent)'; lastLabel.style.fontSize = '9px'; lastLabel.style.fontWeight = '700';
+    svg.appendChild(firstLabel); svg.appendChild(lastLabel);
+  }
+
+  // ---------- render exercise list ----------
+  let currentTemplate = 'upperA';
+  function nextIncompleteLabel(templateKey, fromIndex) {
+    const list = EX[templateKey]; const session = getSession(templateKey);
+    for (let i = fromIndex; i < list.length; i++) {
+      const x = list[i];
+      if (session.checks[x.id].some(function (c) { return !c; })) return x.name;
+    }
+    return null;
+  }
+  function renderExerciseList() {
+    const container = document.getElementById('exercise-list');
+    container.textContent = '';
+    const list = EX[currentTemplate];
+    const session = getSession(currentTemplate);
+    list.forEach(function (x, idx) {
+      const setCount = getSetCount(x.id, x.sets);
+      const allDone = session.checks[x.id].every(Boolean);
+      const card = el('div', { class: 'card' + (allDone ? ' complete' : '') });
+
+      const diagramWrap = el('div', { class: 'diagram-wrap' });
+      const svg = se('svg', {});
+      buildBody(svg, x.zones);
+      diagramWrap.appendChild(svg);
+      diagramWrap.appendChild(el('div', { class: 'zone-label', text: x.zoneLabel }));
+
+      const meta = x.reps + '회 × ' + setCount + '세트' + (x.weight ? ' · 시작 ' + x.weight + 'kg' : '');
+      const titleBlock = el('div', { class: 'card-title', style: { flex: '1' } }, [
+        el('div', { class: 'ex-name', text: x.name }),
+        el('div', { class: 'ex-meta', text: meta })
+      ]);
+      const top = el('div', { class: 'card-top' }, [diagramWrap, titleBlock]);
+      card.appendChild(top);
+
+      if (x.video) {
+        const vid = el('video', { class: 'pt-video', controls: 'controls', playsinline: 'playsinline', preload: 'none' });
+        vid.src = 'videos/' + x.video;
+        card.appendChild(vid);
+      }
+
+      const links = el('div', { class: 'links-row' });
+      const ytUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(x.name + ' 정자세');
+      links.appendChild(el('a', { class: 'pill', href: ytUrl, target: '_blank', rel: 'noopener', text: '유튜브에서 찾아보기 ↗' }));
+      if (!x.isHold && x.weight !== null) {
+        const histBtn = el('button', { class: 'pill', text: '무게 기록 보기' });
+        links.appendChild(histBtn);
+        const histWrap = el('div', { class: 'history-wrap' });
+        const chartSvg = se('svg', {});
+        buildHistoryChart(chartSvg, state.history[x.id] || []);
+        histWrap.appendChild(chartSvg);
+        histBtn.addEventListener('click', function () { histWrap.classList.toggle('open'); });
+        card.appendChild(links);
+        card.appendChild(histWrap);
+      } else {
+        card.appendChild(links);
+      }
+
+      const rows = el('div', { class: 'set-rows' });
+      for (let s = 0; s < setCount; s++) {
+        const checked = session.checks[x.id][s];
+        const btn = el('button', { class: 'set-check' + (checked ? ' checked' : ''), text: checked ? '✓' : String(s + 1) });
+        btn.addEventListener('click', function () {
+          session.checks[x.id][s] = !session.checks[x.id][s];
+          recomputeLog(currentTemplate);
+          if (session.checks[x.id][s]) {
+            if (session.weights[x.id] != null) recordWeight(x.id, session.weights[x.id]);
+            const label = nextIncompleteLabel(currentTemplate, idx) || nextIncompleteLabel(currentTemplate, 0);
+            startRest(x.rest, label && label !== x.name ? label : null);
+          } else {
+            cancelRest();
+          }
+          saveState();
+          renderExerciseList();
+          renderProgress();
+          renderStats();
+        });
+        const row = el('div', { class: 'set-row' }, [
+          btn,
+          el('span', { class: 'set-label', text: 'SET ' + (s + 1) })
+        ]);
+        if (!x.isHold && x.weight !== null) {
+          const input = el('input', { type: 'number', step: '0.5', value: session.weights[x.id] != null ? session.weights[x.id] : '' });
+          input.addEventListener('change', function () {
+            session.weights[x.id] = input.value === '' ? null : parseFloat(input.value);
+            recordWeight(x.id, session.weights[x.id]);
+            saveState();
+          });
+          row.appendChild(input);
+          row.appendChild(el('span', { class: 'unit', text: 'kg' }));
+        }
+        rows.appendChild(row);
+      }
+      card.appendChild(rows);
+
+      const setControls = el('div', { class: 'set-controls' });
+      const addBtn = el('button', { text: '+ 세트 추가' });
+      addBtn.addEventListener('click', function () {
+        state.setCounts[x.id] = setCount + 1;
+        saveState();
+        renderExerciseList();
+        renderProgress();
+      });
+      setControls.appendChild(addBtn);
+      if (setCount > 1) {
+        const rmBtn = el('button', { text: '- 마지막 세트 제거' });
+        rmBtn.addEventListener('click', function () {
+          state.setCounts[x.id] = setCount - 1;
+          session.checks[x.id] = session.checks[x.id].slice(0, setCount - 1);
+          saveState();
+          recomputeLog(currentTemplate);
+          renderExerciseList();
+          renderProgress();
+        });
+        setControls.appendChild(rmBtn);
+      }
+      card.appendChild(setControls);
+
+      container.appendChild(card);
+    });
+  }
+  function renderProgress() {
+    recomputeLog(currentTemplate);
+    const entry = state.log[todayKey];
+    const pct = entry.total ? Math.round((entry.done / entry.total) * 100) : 0;
+    document.getElementById('progress-text').textContent = entry.done + '/' + entry.total + ' 세트';
+    document.getElementById('progress-fill').style.width = pct + '%';
+    saveState();
+  }
+  document.getElementById('reset-today').addEventListener('click', function () {
+    const session = getSession(currentTemplate);
+    EX[currentTemplate].forEach(function (x) { session.checks[x.id] = new Array(getSetCount(x.id, x.sets)).fill(false); });
+    cancelRest();
+    recomputeLog(currentTemplate);
+    saveState();
+    renderExerciseList();
+    renderProgress();
+    renderStats();
+  });
+
+  document.querySelectorAll('nav.days button').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      currentTemplate = btn.dataset.t;
+      document.querySelectorAll('nav.days button').forEach(function (b) { b.classList.toggle('active', b === btn); });
+      renderExerciseList();
+      renderProgress();
+    });
+  });
+  document.querySelector('nav.days button[data-t="upperA"]').classList.add('active');
+
+  // ---------- calendar / streak / bars ----------
+  const realToday = new Date();
+  let viewYear = realToday.getFullYear(), viewMonth = realToday.getMonth();
+  function renderStats() {
+    document.getElementById('cal-title').textContent = viewYear + '.' + String(viewMonth + 1).padStart(2, '0');
+    const isCurrentMonth = (viewYear === realToday.getFullYear() && viewMonth === realToday.getMonth());
+    document.getElementById('stat-days-label').textContent = isCurrentMonth ? '이번달 운동일' : '이 달 운동일';
+    const grid = document.getElementById('cal-grid');
+    grid.textContent = '';
+    ['일','월','화','수','목','금','토'].forEach(function (d) { grid.appendChild(el('div', { class: 'cal-dow', text: d })); });
+    const firstDow = new Date(viewYear, viewMonth, 1).getDay();
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    let daysCount = 0;
+    for (let i = 0; i < firstDow; i++) grid.appendChild(el('div', { class: 'cal-cell empty' }));
+    for (let d = 1; d <= daysInMonth; d++) {
+      const key = viewYear + '-' + String(viewMonth + 1).padStart(2, '0') + '-' + String(d).padStart(2, '0');
+      const entry = state.log[key];
+      let cls = 'cal-cell';
+      if (key === todayKey) cls += ' today';
+      if (entry && entry.total > 0) {
+        daysCount++;
+        cls += entry.done === entry.total ? ' done-full' : ' done-partial';
+      }
+      const isPast = key < todayKey;
+      if (isPast) cls += ' clickable';
+      const cell = el('div', { class: cls, text: String(d) });
+      if (isPast) {
+        cell.title = '탭해서 미완료 → 완료 → 취소 순서로 전환';
+        cell.addEventListener('click', function () {
+          const e2 = state.log[key];
+          if (!e2 || e2.total === 0) {
+            state.log[key] = { template: 'manual', done: 1, total: 1 };
+          } else if (e2.done < e2.total) {
+            state.log[key] = { template: e2.template, done: e2.total, total: e2.total };
+          } else {
+            delete state.log[key];
+          }
+          saveState();
+          renderStats();
+        });
+      }
+      grid.appendChild(cell);
+    }
+    document.getElementById('stat-days').textContent = daysCount;
+
+    let streak = 0;
+    let cursor = new Date();
+    while (true) {
+      const key = dateKey(cursor);
+      const entry = state.log[key];
+      if (entry && entry.done > 0) { streak++; cursor.setDate(cursor.getDate() - 1); }
+      else break;
+    }
+    document.getElementById('stat-streak').textContent = streak;
+
+    const todayEntry = state.log[todayKey];
+    document.getElementById('stat-today').textContent = (todayEntry && todayEntry.total) ? Math.round(todayEntry.done / todayEntry.total * 100) + '%' : '0%';
+
+    const bars = document.getElementById('bars');
+    bars.textContent = '';
+    const maxBar = 20;
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const key = dateKey(d);
+      const entry = state.log[key];
+      const val = entry ? entry.done : 0;
+      const h = Math.min(100, (val / maxBar) * 100);
+      const col = el('div', { class: 'bar-col' }, [
+        el('div', { class: 'bar' + (val > 0 ? ' active' : ''), style: { height: h + '%' } })
+      ]);
+      bars.appendChild(col);
+    }
+  }
+  document.getElementById('cal-prev').addEventListener('click', function () {
+    viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+    renderStats();
+  });
+  document.getElementById('cal-next').addEventListener('click', function () {
+    viewMonth++; if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+    renderStats();
+  });
+  document.getElementById('cal-today-btn').addEventListener('click', function () {
+    viewYear = realToday.getFullYear(); viewMonth = realToday.getMonth();
+    renderStats();
+  });
+
+  renderExerciseList();
+  renderProgress();
+  renderStats();
+})();
+</script>
+</body>
+</html>
