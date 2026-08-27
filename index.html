@@ -68,6 +68,7 @@
   .day-progress .fill { height:100%; background:var(--ok); }
   .reset-btn { flex:none; font-family:'Oswald',sans-serif; font-size:.68rem; text-transform:uppercase; letter-spacing:.03em; border:1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 999px; padding: 6px 11px; cursor:pointer; }
   .reset-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .day-note-input { width: 100%; padding: 9px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--ink); font-family: inherit; font-size: .85rem; margin-bottom: 16px; }
 
   .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; display:flex; flex-direction:column; gap: 12px; }
   .card.complete { border-color: var(--ok); }
@@ -76,6 +77,9 @@
   .diagram-wrap svg { width: 100%; height: auto; }
   .diagram-wrap .zone-label { font-size: .62rem; color: var(--accent); text-align:center; margin-top: 2px; font-weight: 600; }
   .card-title .ex-name { font-size: 1.02rem; font-weight: 800; }
+  .ex-name-row { display:flex; align-items:center; gap: 8px; }
+  .risk-badge { font-family:'Oswald',sans-serif; font-size: .62rem; letter-spacing:.03em; background: var(--accent-soft); color: var(--accent); border-radius: 999px; padding: 2px 8px; font-weight: 700; }
+  .risk-note { font-size: .78rem; color: var(--accent); background: var(--accent-soft); border-radius: 10px; padding: 8px 10px; }
   .card-title .ex-meta { font-size: .78rem; color: var(--muted); margin-top: 2px; }
 
   video.pt-video { width: 100%; border-radius: 10px; background: #000; display:block; max-height: 260px; }
@@ -88,6 +92,9 @@
   .history-wrap.open { display:block; }
   .history-wrap svg { width:100%; height:70px; }
   .history-hint { font-size: .74rem; color: var(--muted); margin-top: 4px; }
+  .how-steps { margin: 0 0 8px; padding-left: 20px; font-size: .86rem; display:flex; flex-direction:column; gap: 5px; }
+  .how-edit { width: 100%; min-height: 100px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); font-family: inherit; font-size: .86rem; margin-bottom: 8px; }
+  .weight-hint { font-size: .72rem; color: var(--accent); margin-left: 4px; }
 
   .set-rows { display:flex; flex-direction:column; gap: 8px; }
   .set-row { display:flex; align-items:center; gap: 10px; }
@@ -124,7 +131,7 @@
   <div class="lock-card">
     <h2>🔒 비밀번호</h2>
     <p>개인 운동 루틴 페이지입니다.</p>
-    <input id="lock-input" type="password" inputmode="numeric" autocomplete="off" placeholder="••••••">
+    <input id="lock-input" type="password" inputmode="numeric" autocomplete="off" placeholder="">
     <button id="lock-submit">입장</button>
     <div class="err" id="lock-err"></div>
   </div>
@@ -172,6 +179,8 @@
     <div class="track"><div class="fill" id="progress-fill" style="width:0%"></div></div>
     <button id="reset-today" class="reset-btn">오늘 리셋</button>
   </div>
+
+  <input id="day-note" class="day-note-input" type="text" maxlength="80" placeholder="오늘의 한줄 메모 (컨디션, 특이사항 등)">
 
   <div id="exercise-list"></div>
 </div>
@@ -243,36 +252,56 @@
   function ex(o) { return o; }
   const EX = {
     upperA: [
-      ex({ id:'latpulldown', name:'랫풀다운 (언더그립)', zones:['oblique-L','oblique-R'], zoneLabel:'등 옆(광배근)', sets:3, reps:'12~15', weight:15, rest:90, video:'1일차2.mp4' }),
-      ex({ id:'assistedpullup', name:'어시스트 풀업', zones:['oblique-L','oblique-R','shoulder-L','shoulder-R'], zoneLabel:'등 전체', sets:3, reps:'8~10', weight:null, rest:90, video:'4일차3.mp4' }),
-      ex({ id:'inclinepress', name:'인클라인 체스트프레스', zones:['torso-upper'], zoneLabel:'가슴 위쪽', sets:3, reps:'12', weight:10, rest:90, video:'3일차2.mp4' }),
-      ex({ id:'tricepspushdown', name:'케이블 트라이셉스 푸시다운', zones:['upperarm-L','upperarm-R'], zoneLabel:'팔 뒤쪽(삼두)', sets:2, reps:'15', weight:10, rest:60, video:'1일차4.mp4' }),
-      ex({ id:'bicepcurl', name:'이두 컬', zones:['upperarm-L','upperarm-R'], zoneLabel:'팔 앞쪽(이두)', sets:3, reps:'12', weight:7, rest:60, video:'3일차4.mp4' }),
-      ex({ id:'plank', name:'플랭크', zones:['torso-lower','oblique-L','oblique-R'], zoneLabel:'복부(코어)', sets:3, reps:'30~40초', weight:null, rest:45, video:null, isHold:true })
+      ex({ id:'latpulldown', name:'랫풀다운 (언더그립)', zones:['oblique-L','oblique-R'], zoneLabel:'등 옆(광배근)', sets:3, reps:'12~15', weight:15, rest:90, video:'1일차2.mp4',
+        steps:['바를 어깨너비보다 좁게 언더그립(손바닥이 몸 쪽)으로 잡는다','허벅지 패드에 다리를 고정하고 상체를 살짝 뒤로 기울인다','팔꿈치를 몸통 쪽으로 붙이며 바를 쇄골 앞까지 당긴다','이두가 먼저 지치면 등이 아니라 팔로 당기고 있다는 신호'] }),
+      ex({ id:'assistedpullup', name:'어시스트 풀업', zones:['oblique-L','oblique-R','shoulder-L','shoulder-R'], zoneLabel:'등 전체', sets:3, reps:'8~10', weight:null, rest:90, video:'4일차3.mp4',
+        steps:['보조 무게를 설정한다 — 무게가 클수록 더 많이 보조받는다(초보는 높게 시작)','손잡이를 어깨너비보다 1.5배 정도 넓게 잡고 무릎을 패드에 댄다','가슴을 편 채 팔꿈치를 아래로 당기며 몸을 끌어올린다','상체가 흔들리지 않게 유지하며 천천히 내려온다'] }),
+      ex({ id:'inclinepress', name:'인클라인 체스트프레스', zones:['torso-upper'], zoneLabel:'가슴 위쪽', sets:3, reps:'12', weight:10, rest:90, video:'3일차2.mp4',
+        steps:['등을 패드에 붙이고 손잡이를 가슴 위쪽 라인에 맞춘다','팔을 사선 위로 밀어 펴고 천천히 되돌아온다','어깨가 으쓱 올라가지 않게, 손목은 일직선 유지'] }),
+      ex({ id:'tricepspushdown', name:'케이블 트라이셉스 푸시다운', zones:['upperarm-L','upperarm-R'], zoneLabel:'팔 뒤쪽(삼두)', sets:2, reps:'15', weight:10, rest:60, video:'1일차4.mp4',
+        steps:['팔꿈치를 몸통 옆에 고정하고 로프를 잡는다','팔꿈치만 움직여 로프를 아래로 편다','팔꿈치가 앞뒤로 움직이지 않게 고정'] }),
+      ex({ id:'bicepcurl', name:'이두 컬', zones:['upperarm-L','upperarm-R'], zoneLabel:'팔 앞쪽(이두)', sets:3, reps:'12', weight:7, rest:60, video:'3일차4.mp4',
+        steps:['팔꿈치를 패드/몸통 옆에 고정하고 손잡이를 잡는다','팔꿈치만 굽혀 손잡이를 끌어올린다','반동 없이, 어깨가 들리지 않게'] }),
+      ex({ id:'plank', name:'플랭크', zones:['torso-lower','oblique-L','oblique-R'], zoneLabel:'복부(코어)', sets:3, reps:'30~40초', weight:null, rest:45, video:null, isHold:true,
+        steps:['팔꿈치를 어깨 아래에 두고 발끝으로 몸을 지지한다','골반을 살짝 올려 머리~발끝이 일직선이 되게 한다','무릎을 펴고 허리가 굽지 않게 복부에 힘을 준다','처음부터 오래 버티려 하지 말고, 버틸 수 있는 시간의 50~80%로 여러 세트'] })
     ],
     upperB: [
-      ex({ id:'chestpress', name:'체스트프레스 머신', zones:['torso-upper'], zoneLabel:'가슴 중앙', sets:3, reps:'12', weight:10, rest:90, video:'4일차4.mp4' }),
-      ex({ id:'landminepress', name:'랜드마인 프레스', zones:['shoulder-L','shoulder-R','upperarm-L','upperarm-R'], zoneLabel:'어깨 앞+삼두', sets:2, reps:'10(양쪽)', weight:null, rest:60, video:'4일차1.mp4' }),
-      ex({ id:'landminerotation', name:'랜드마인 로테이션', zones:['oblique-L','oblique-R'], zoneLabel:'옆구리(복사근)', sets:2, reps:'10(양방향)', weight:null, rest:60, video:'4일차2.mp4' }),
-      ex({ id:'dumbbellfly', name:'덤벨 플라이', zones:['torso-upper'], zoneLabel:'가슴 안쪽/바깥쪽', sets:2, reps:'12', weight:5, rest:60, video:'3일차3.mp4' }),
-      ex({ id:'inclinepushup', name:'스미스 인클라인 푸시업', zones:['torso-upper','upperarm-L','upperarm-R'], zoneLabel:'가슴+삼두+어깨', sets:3, reps:'12~15', weight:null, rest:90, video:'3일차1.mp4' }),
-      ex({ id:'behindneckpress', name:'비하인드 넥 프레스', zones:['shoulder-L','shoulder-R'], zoneLabel:'어깨 측면·후면', sets:2, reps:'12', weight:8, rest:60, video:'5일차1.mp4' }),
-      ex({ id:'shoulderpress', name:'숄더프레스 머신', zones:['shoulder-L','shoulder-R'], zoneLabel:'어깨 전반', sets:2, reps:'12', weight:10, rest:60, video:'5일차2.mp4' })
+      ex({ id:'chestpress', name:'체스트프레스 머신', zones:['torso-upper'], zoneLabel:'가슴 중앙', sets:3, reps:'12', weight:10, rest:90, video:'4일차4.mp4',
+        steps:['등·머리를 패드에 붙이고 손잡이를 가슴 높이에 맞춘다','손잡이를 앞으로 밀어 팔을 편다','팔꿈치를 완전히 잠그지 않기'] }),
+      ex({ id:'inclinepushup', name:'스미스 인클라인 푸시업', zones:['torso-upper','upperarm-L','upperarm-R'], zoneLabel:'가슴+삼두+어깨', sets:3, reps:'12~15', weight:null, rest:90, video:'3일차1.mp4',
+        steps:['바를 어깨너비로 잡고 몸을 사선으로 기울인다','가슴이 바에 가까워지도록 팔꿈치를 굽혔다 편다','엉덩이가 처지지 않게 몸을 일직선으로 유지'] }),
+      ex({ id:'dumbbellfly', name:'덤벨 플라이', zones:['torso-upper'], zoneLabel:'가슴 안쪽/바깥쪽', sets:2, reps:'12', weight:5, rest:60, video:'3일차3.mp4',
+        steps:['벤치에 누워 무릎을 굽히고 덤벨을 가슴 위로 든다','팔꿈치를 살짝 굽힌 채 옆으로 크게 벌린다(가슴 바깥쪽이 늘어나는 느낌)','다시 모으며 가슴 안쪽으로 조인다','팔꿈치를 완전히 펴지 않기(부상 위험)'] }),
+      ex({ id:'shoulderpress', name:'숄더프레스 머신', zones:['shoulder-L','shoulder-R'], zoneLabel:'어깨 전반', sets:2, reps:'12', weight:10, rest:60, video:'5일차2.mp4',
+        steps:['등을 패드에 붙이고 손잡이를 어깨 높이에 맞춘다','머리 위로 밀어 올렸다가 천천히 내린다','승모근이 먼저 으쓱 올라가지 않게, 어깨와 귀 사이를 멀리 유지'] }),
+      ex({ id:'landminepress', name:'랜드마인 프레스', zones:['shoulder-L','shoulder-R','upperarm-L','upperarm-R'], zoneLabel:'어깨 앞+삼두', sets:2, reps:'10(양쪽)', weight:null, rest:60, video:'4일차1.mp4',
+        steps:['바 끝을 어깨 앞에 랙 자세로 잡는다','대각선 위로 완전히 밀어 올린다','허리를 젖혀 밀지 않고 코어 긴장 유지'] }),
+      ex({ id:'behindneckpress', name:'비하인드 넥 프레스', zones:['shoulder-L','shoulder-R'], zoneLabel:'어깨 측면·후면', sets:2, reps:'12', weight:8, rest:60, video:'5일차1.mp4', risk:true,
+        riskNote:'어깨 가동범위가 부족한 상태로 하면 어깨 충돌증후군 위험이 있다는 지적이 있는 동작입니다. 어깨가 뻣뻣하거나 통증이 있으면 숄더프레스로 대체하세요.',
+        steps:['바(덤벨)를 어깨너비보다 넓게 잡고 목 뒤쪽에 위치시킨다','상체를 너무 숙이지 않은 채 수직으로 밀어 올린다','⚠️ 어깨가 뻣뻣하면 무리하지 말고 숄더프레스로 대체'] }),
+      ex({ id:'landminerotation', name:'랜드마인 로테이션', zones:['oblique-L','oblique-R'], zoneLabel:'옆구리(복사근)', sets:2, reps:'10(양방향)', weight:null, rest:60, video:'4일차2.mp4',
+        steps:['바 끝을 양손으로 잡고 정면을 향해 선다','팔을 곧게 편 채 하체는 고정하고 바를 좌우로 돌린다','회전을 만드는 게 아니라 "버티는" 느낌으로 컨트롤'] })
     ],
     lower: [
-      ex({ id:'stepup', name:'스텝박스 스텝업 (워밍업)', zones:['upperleg-L','upperleg-R','lowerleg-L','lowerleg-R'], zoneLabel:'전신 워밍업', sets:2, reps:'10', weight:null, rest:30, video:'1일차1.mp4' }),
-      ex({ id:'hipkickback', name:'힙 킥백', zones:['hip'], zoneLabel:'엉덩이(둔근)', sets:2, reps:'12(양쪽)', weight:null, rest:45, video:'2일차1.mp4' }),
-      ex({ id:'legcurl', name:'레그컬', zones:['upperleg-L','upperleg-R'], zoneLabel:'허벅지 뒤(햄스트링)', sets:3, reps:'15', weight:15, rest:60, video:'2일차2.mp4' }),
-      ex({ id:'gobletsquat', name:'고블릿 스쿼트', zones:['hip','upperleg-L','upperleg-R'], zoneLabel:'엉덩이+허벅지 앞', sets:3, reps:'12', weight:8, rest:90, video:null }),
-      ex({ id:'sideplank', name:'사이드 플랭크', zones:['oblique-L','oblique-R'], zoneLabel:'옆구리(복사근)', sets:2, reps:'30초(양쪽)', weight:null, rest:45, video:null, isHold:true }),
-      ex({ id:'cardio', name:'유산소 (러닝머신 등)', zones:['upperleg-L','upperleg-R','lowerleg-L','lowerleg-R'], zoneLabel:'심박수 올리기', sets:1, reps:'15~20분', weight:null, rest:0, video:null })
+      ex({ id:'stepup', name:'스텝박스 스텝업 (워밍업)', zones:['upperleg-L','upperleg-R','lowerleg-L','lowerleg-R'], zoneLabel:'전신 워밍업', sets:2, reps:'10', weight:null, rest:30, video:'1일차1.mp4',
+        steps:['박스 앞에 서서 한 발을 박스 위에 올린다','올린 다리 뒤꿈치로 밀며 몸을 곧게 세워 올라선다','무릎이 발끝보다 안쪽으로 모이지 않게'] }),
+      ex({ id:'gobletsquat', name:'고블릿 스쿼트', zones:['hip','upperleg-L','upperleg-R'], zoneLabel:'엉덩이+허벅지 앞', sets:3, reps:'12', weight:8, rest:90, video:null,
+        steps:['덤벨을 가슴 앞에 세로로 잡고 선다','엉덩이를 뒤로 빼며 앉는다(무릎이 발끝과 같은 방향)','발바닥으로 밀며 일어난다','복부 앞쪽과 허벅지에 힘이 들어오는지 확인'] }),
+      ex({ id:'legcurl', name:'레그컬', zones:['upperleg-L','upperleg-R'], zoneLabel:'허벅지 뒤(햄스트링)', sets:3, reps:'15', weight:15, rest:60, video:'2일차2.mp4',
+        steps:['엎드려서 발목 패드를 발목 위에 맞춘다','햄스트링과 엉덩이에 힘을 주며 패드를 엉덩이 쪽으로 당긴다','골반이 패드에서 뜨지 않게 고정 — 뜨면 허리로 부담이 넘어감'] }),
+      ex({ id:'hipkickback', name:'힙 킥백', zones:['hip'], zoneLabel:'엉덩이(둔근)', sets:2, reps:'12(양쪽)', weight:null, rest:45, video:'2일차1.mp4',
+        steps:['골반 너비로 서서 한 손으로 지지대를 가볍게 잡는다','한쪽 다리를 천천히 뒤로 들어올리며 엉덩이를 조인다','다리가 몸통보다 높이 올라가지 않게, 크게 차기보다 자극 오는 범위만'] }),
+      ex({ id:'sideplank', name:'사이드 플랭크', zones:['oblique-L','oblique-R'], zoneLabel:'옆구리(복사근)', sets:2, reps:'30초(양쪽)', weight:null, rest:45, video:null, isHold:true,
+        steps:['옆으로 누워 한쪽 팔꿈치로 상체를 지지한다','엉덩이를 들어 머리~발끝을 일직선으로 만든다','허리가 굽지 않게 유지, 힘들면 시간을 줄여서 여러 세트로'] }),
+      ex({ id:'cardio', name:'유산소 (러닝머신 등)', zones:['upperleg-L','upperleg-R','lowerleg-L','lowerleg-R'], zoneLabel:'심박수 올리기', sets:1, reps:'15~20분', weight:null, rest:0, video:null,
+        steps:['근력 운동을 마친 뒤 진행 — 먼저 하면 스쿼트 등 무거운 동작에 힘이 부족해짐','대화 가능한 정도의 강도로 15~20분'] })
     ]
   };
 
   // ---------- state ----------
   function dateKey(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
   const todayKey = dateKey(new Date());
-  function defaultState() { return { log:{}, sessions:{}, history:{}, setCounts:{} }; }
+  function defaultState() { return { log:{}, sessions:{}, history:{}, setCounts:{}, notes:{}, dayNotes:{} }; }
   function loadState() {
     try { const raw = localStorage.getItem('routine-state-v2'); if (raw) return Object.assign(defaultState(), JSON.parse(raw)); } catch (e) {}
     return defaultState();
@@ -305,14 +334,25 @@
     EX[templateKey].forEach(function (x) { session.checks[x.id].forEach(function (c) { total++; if (c) done++; }); });
     state.log[todayKey] = { template: templateKey, done: done, total: total };
   }
-  function recordWeight(exId, weight) {
+  function recordWeight(exId, weight, completed) {
     if (weight === null || weight === undefined || isNaN(weight)) return;
     if (!state.history[exId]) state.history[exId] = [];
     const arr = state.history[exId];
     const existing = arr.find(function (r) { return r.date === todayKey; });
-    if (existing) existing.weight = weight;
-    else arr.push({ date: todayKey, weight: weight });
+    if (existing) { existing.weight = weight; if (completed) existing.completed = true; }
+    else arr.push({ date: todayKey, weight: weight, completed: !!completed });
     arr.sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+  }
+  function suggestNextWeight(exId, currentWeight) {
+    const arr = state.history[exId];
+    if (!arr || currentWeight == null) return null;
+    const past = arr.filter(function (r) { return r.date < todayKey && r.completed; });
+    if (past.length < 2) return null;
+    const lastTwo = past.slice(-2);
+    if (lastTwo[0].weight === currentWeight && lastTwo[1].weight === currentWeight) {
+      return Math.round((currentWeight + 2.5) * 2) / 2;
+    }
+    return null;
   }
   function lastWeightBefore(exId) {
     const arr = state.history[exId];
@@ -429,12 +469,15 @@
       diagramWrap.appendChild(el('div', { class: 'zone-label', text: x.zoneLabel }));
 
       const meta = x.reps + '회 × ' + setCount + '세트' + (x.weight ? ' · 시작 ' + x.weight + 'kg' : '');
+      const nameRow = el('div', { class: 'ex-name-row' }, [el('span', { text: x.name })]);
+      if (x.risk) nameRow.appendChild(el('span', { class: 'risk-badge', text: '⚠️ 주의' }));
       const titleBlock = el('div', { class: 'card-title', style: { flex: '1' } }, [
-        el('div', { class: 'ex-name', text: x.name }),
+        el('div', { class: 'ex-name' }, [nameRow]),
         el('div', { class: 'ex-meta', text: meta })
       ]);
       const top = el('div', { class: 'card-top' }, [diagramWrap, titleBlock]);
       card.appendChild(top);
+      if (x.risk) card.appendChild(el('div', { class: 'risk-note', text: x.riskNote }));
 
       if (x.video) {
         const vid = el('video', { class: 'pt-video', controls: 'controls', playsinline: 'playsinline', preload: 'none' });
@@ -445,6 +488,44 @@
       const links = el('div', { class: 'links-row' });
       const ytUrl = 'https://www.youtube.com/results?search_query=' + encodeURIComponent(x.name + ' 정자세');
       links.appendChild(el('a', { class: 'pill', href: ytUrl, target: '_blank', rel: 'noopener', text: '유튜브에서 찾아보기 ↗' }));
+
+      const howBtn = el('button', { class: 'pill', text: '운동 방법 보기' });
+      links.appendChild(howBtn);
+      const howWrap = el('div', { class: 'history-wrap' });
+      function renderHow() {
+        howWrap.textContent = '';
+        const custom = state.notes[x.id];
+        const stepsList = el('ol', { class: 'how-steps' });
+        (custom != null ? custom.split('\n').filter(Boolean) : (x.steps || [])).forEach(function (s) {
+          stepsList.appendChild(el('li', { text: s }));
+        });
+        howWrap.appendChild(stepsList);
+        const editBtn = el('button', { class: 'pill', text: '편집' });
+        howWrap.appendChild(editBtn);
+        if (custom != null) {
+          const resetBtn = el('button', { class: 'pill', text: '기본값으로 되돌리기' });
+          resetBtn.addEventListener('click', function () { delete state.notes[x.id]; saveState(); renderHow(); });
+          howWrap.appendChild(resetBtn);
+        }
+        editBtn.addEventListener('click', function () {
+          const ta = el('textarea', { class: 'how-edit' });
+          ta.value = (custom != null ? custom : (x.steps || []).join('\n'));
+          howWrap.textContent = '';
+          howWrap.appendChild(ta);
+          const saveBtn = el('button', { class: 'pill', text: '저장' });
+          saveBtn.addEventListener('click', function () {
+            state.notes[x.id] = ta.value;
+            saveState();
+            renderHow();
+          });
+          howWrap.appendChild(saveBtn);
+        });
+      }
+      renderHow();
+      howBtn.addEventListener('click', function () { howWrap.classList.toggle('open'); });
+      card.appendChild(links);
+      card.appendChild(howWrap);
+
       if (!x.isHold && x.weight !== null) {
         const histBtn = el('button', { class: 'pill', text: '무게 기록 보기' });
         links.appendChild(histBtn);
@@ -453,10 +534,7 @@
         buildHistoryChart(chartSvg, state.history[x.id] || []);
         histWrap.appendChild(chartSvg);
         histBtn.addEventListener('click', function () { histWrap.classList.toggle('open'); });
-        card.appendChild(links);
         card.appendChild(histWrap);
-      } else {
-        card.appendChild(links);
       }
 
       const rows = el('div', { class: 'set-rows' });
@@ -467,7 +545,7 @@
           session.checks[x.id][s] = !session.checks[x.id][s];
           recomputeLog(currentTemplate);
           if (session.checks[x.id][s]) {
-            if (session.weights[x.id] != null) recordWeight(x.id, session.weights[x.id]);
+            if (session.weights[x.id] != null) recordWeight(x.id, session.weights[x.id], session.checks[x.id].every(Boolean));
             const label = nextIncompleteLabel(currentTemplate, idx) || nextIncompleteLabel(currentTemplate, 0);
             startRest(x.rest, label && label !== x.name ? label : null);
           } else {
@@ -491,6 +569,10 @@
           });
           row.appendChild(input);
           row.appendChild(el('span', { class: 'unit', text: 'kg' }));
+          if (s === 0) {
+            const suggested = suggestNextWeight(x.id, session.weights[x.id]);
+            if (suggested != null) row.appendChild(el('span', { class: 'weight-hint', text: '🔺 다음엔 ' + suggested + 'kg 추천' }));
+          }
         }
         rows.appendChild(row);
       }
@@ -530,6 +612,13 @@
     document.getElementById('progress-fill').style.width = pct + '%';
     saveState();
   }
+  const dayNoteInput = document.getElementById('day-note');
+  dayNoteInput.value = state.dayNotes[todayKey] || '';
+  dayNoteInput.addEventListener('change', function () {
+    if (dayNoteInput.value) state.dayNotes[todayKey] = dayNoteInput.value;
+    else delete state.dayNotes[todayKey];
+    saveState();
+  });
   document.getElementById('reset-today').addEventListener('click', function () {
     const session = getSession(currentTemplate);
     EX[currentTemplate].forEach(function (x) { session.checks[x.id] = new Array(getSetCount(x.id, x.sets)).fill(false); });
@@ -576,9 +665,11 @@
       }
       const isPast = key < todayKey;
       if (isPast) cls += ' clickable';
+      const noteText = state.dayNotes[key];
       const cell = el('div', { class: cls, text: String(d) });
+      if (noteText) cell.title = '메모: ' + noteText;
       if (isPast) {
-        cell.title = '탭해서 미완료 → 완료 → 취소 순서로 전환';
+        cell.title = (noteText ? '메모: ' + noteText + ' — ' : '') + '탭해서 미완료 → 완료 → 취소 순서로 전환';
         cell.addEventListener('click', function () {
           const e2 = state.log[key];
           if (!e2 || e2.total === 0) {
